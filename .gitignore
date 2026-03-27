@@ -210,3 +210,8 @@ __marimo__/
 .agent/
 .agents/
 skills-lock.json
+# Runtime outputs
+artifacts/*
+runtime_logs/*
+!artifacts/.gitkeep
+!runtime_logs/.gitkeep
