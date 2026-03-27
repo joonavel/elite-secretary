@@ -257,6 +257,18 @@ uv run llm-financial-workflow --run-id demo-run --output-dir ./workflow_runs/dem
 export EXCEL_MCP_COMMAND="C:\\custom\\path\\mcp-excel.exe"
 ```
 
+빠른 실행 스크립트:
+
+```bash
+bash scripts/run_workflow.sh
+```
+
+기본값은 현재 시각 기반 `run_id`와 `workflow_runs/<run_id>` 출력 경로를 사용한다. 필요하면 환경 변수로 덮어쓸 수 있다.
+
+```bash
+RUN_ID=demo-run OUTPUT_DIR=./workflow_runs/demo-run bash scripts/run_workflow.sh
+```
+
 ### 새 clone 환경 체크리스트
 
 - [ ] `.venv` 생성 및 `uv sync` 완료
