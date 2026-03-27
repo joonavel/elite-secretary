@@ -19,6 +19,7 @@ dependencies = [
 
 [project.scripts]
 llm-financial-workflow = "llm_financial_workflow.cli:main"
+install-excel-mcp = "llm_financial_workflow.install_excel_mcp:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -31,6 +31,11 @@ class AppConfig:
         excel_mcp_command = Path(
             os.getenv("EXCEL_MCP_COMMAND", resolved_root / "tools" / "excel-mcp" / "mcp-excel.exe")
         ).resolve()
+        if not excel_mcp_command.exists():
+            raise ValueError(
+                "Excel MCP executable was not found. Install it with "
+                "`uv run install-excel-mcp` or set EXCEL_MCP_COMMAND to the mcp-excel.exe path."
+            )
 
         return cls(
             repo_root=resolved_root,
