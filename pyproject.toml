@@ -1,0 +1,32 @@
+[project]
+name = "elite-secretary"
+version = "0.1.0"
+description = "Teams meeting recording to LLM cost analysis orchestrator"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.28.1",
+  "azure-identity>=1.23.0",
+  "azure-cognitiveservices-speech>=1.46.0",
+  "pandas>=2.3.0",
+  "openpyxl>=3.1.5",
+  "python-docx>=1.2.0",
+  "pydantic>=2.11.0",
+  "python-dotenv>=1.1.1",
+]
+
+[project.optional-dependencies]
+audio = [
+  "pydub>=0.25.1",
+]
+orchestration = [
+  "langchain-core>=0.3.0",
+  "langchain-azure-ai>=0.1.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false
