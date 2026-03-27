@@ -210,3 +210,12 @@ __marimo__/
 .agent/
 .agents/
 skills-lock.json
+
+# Local workflow artifacts
+workflow_runs/
+/employee_llm_financial_report_2025_h1.xlsx
+~$*.xlsx
+
+# External tools and downloaded binaries
+mcp-server-excel/
+tools/excel-mcp/
