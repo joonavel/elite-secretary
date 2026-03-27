@@ -72,11 +72,7 @@
 
 **데이터 준비·정제에 80%의 시간이 소모된다**
 
-IDC는 "데이터 발견·준비·보호에 전체 업무 시간의 80%가 소모되고, 실제 분석과 인사이트 도출에는 단 20%만 사용된다"고 발표했다. 이는 데이터 담당자가 고부가 가치 업무보다 단순 준비 작업에 훨씬 많은 시간을 쓰고 있음을 의미한다.<sup>[[1]](#ref1)[[2]](#ref2)</sup>
-
-**수동 리포팅 작업에 매주 10~15시간 낭비**
-
-실무 분석가들은 수동 리포팅 작업에 매주 평균 10~15시간을 소모하고 있다. 연간으로 환산하면 직원 1인당 520~780시간이 인사이트 도출이 아닌 단순 집계·정리 작업에 쓰이는 셈이다.<sup>[[3]](#ref3)</sup>
+IDC는 "데이터 발견·준비·보호에 전체 업무 시간의 80%가 소모되고, 실제 분석과 인사이트 도출에는 단 20%만 사용된다"고 발표했다. 이는 데이터 담당자가 고부가 가치 업무보다 단순 준비 작업에 훨씬 많은 시간을 쓰고 있음을 의미한다.<sup>[[1]](#ref1)</sup>
 
 ### Elite Secretary가 만드는 변화
 
@@ -303,12 +299,6 @@ RUN_ID=demo-run OUTPUT_DIR=./workflow_runs/demo-run bash scripts/run_workflow.sh
 
 <a id="ref1"></a>**[1]** Dyvenia — *How Data Marts Streamline Your Analytics* (IDC 인용: "80% of time is spent on data discovery, preparation, and protection, and only 20% of time is spent on actual analytics")
 https://dyvenia.com/blogs/business/how-data-marts-streamline-your-analytics/4/
-
-<a id="ref2"></a>**[2]** Amperity — *The Cost of Poor Data Quality* (CrowdFlower/Figure Eight 등 복수 출처 인용: 데이터 준비에 소모되는 시간 비율은 출처/정의에 따라 25~80% 범위)
-https://amperity.com/blog/cost-of-poor-data-quality
-
-<a id="ref3"></a>**[3]** Agents for Hire — *The Hidden Cost of Manual Reporting: $42K Annual Loss per 100 Employees* (수동 리포팅에 주당 10~15시간 소모)
-https://agentsforhire.ai/blog/the-hidden-cost-of-manual-reporting-42k-annual-loss-per-100-employees
 
 ---
 
