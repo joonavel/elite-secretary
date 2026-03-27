@@ -2,24 +2,39 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable
 from uuid import uuid4
 
+from src.app.config import AppConfig
 from src.agents.agent_a_intent import AgentAIntentExtractor
 from src.agents.agent_b_aggregation import AgentBAggregator
 from src.agents.agent_c_excel import AgentCExcelBuilder
 from src.agents.agent_d_insight import AgentDInsightWriter
 from src.domain.errors import ErrorCode, PipelineError
 from src.domain.models import ArtifactMetadata, MeetingContext, PipelineResult, PipelineStatus, PipelineStep
+from src.integrations.audio_preprocessor import (
+    AudioPreprocessor,
+    FfmpegAudioPreprocessor,
+    PassthroughAudioPreprocessor,
+)
+from src.integrations.graph_client import AzureIdentityGraphClient, GraphClient
 from src.integrations.sharepoint_publisher import SharePointPublisher, StubSharePointPublisher
-from src.integrations.speech_stt import MockSpeechToText, SpeechToText
+from src.integrations.speech_stt import AzureSpeechFileInputSTT, MockSpeechToText, SpeechToText
 from src.integrations.teams_notifier import StubTeamsNotifier, TeamsNotifier
-from src.integrations.teams_recording_resolver import LocalRecordingResolver, RecordingResolver
+from src.integrations.teams_recording_resolver import (
+    LocalRecordingResolver,
+    RecordingResolver,
+    TeamsChatRecordingResolver,
+)
 from src.pipeline.state_store import PipelineStateStore
 
 
 @dataclass(slots=True)
 class PipelineDeps:
     recording_resolver: RecordingResolver
+    recording_resolver_factory: Callable[[MeetingContext], RecordingResolver] | None
+    audio_preprocessor: AudioPreprocessor
     stt: SpeechToText
     agent_a: AgentAIntentExtractor
     agent_b: AgentBAggregator
@@ -32,7 +47,74 @@ class PipelineDeps:
 def default_deps(diarization_enabled: bool) -> PipelineDeps:
     return PipelineDeps(
         recording_resolver=LocalRecordingResolver(),
+        recording_resolver_factory=None,
+        audio_preprocessor=PassthroughAudioPreprocessor(),
         stt=MockSpeechToText(diarization_enabled=diarization_enabled),
+        agent_a=AgentAIntentExtractor(),
+        agent_b=AgentBAggregator(),
+        agent_c=AgentCExcelBuilder(),
+        agent_d=AgentDInsightWriter(),
+        publisher=StubSharePointPublisher(),
+        notifier=StubTeamsNotifier(),
+    )
+
+
+def build_integration_deps(config: AppConfig) -> PipelineDeps:
+    config.require_keys(
+        [
+            "azure_tenant_id",
+            "azure_client_id",
+            "azure_client_secret",
+            "azure_speech_key",
+            "azure_speech_region",
+        ]
+    )
+    graph_client: GraphClient = AzureIdentityGraphClient(
+        tenant_id=config.azure_tenant_id or "",
+        client_id=config.azure_client_id or "",
+        client_secret=config.azure_client_secret or "",
+        scope=config.graph_scope,
+        base_url=config.graph_api_base_url,
+    )
+    recording_resolver: RecordingResolver
+    if config.teams_chat_id:
+        recording_resolver = TeamsChatRecordingResolver(
+            graph_client=graph_client,
+            download_dir=Path(config.recording_download_dir),
+            recording_extensions=config.graph_recording_extensions,
+        )
+    else:
+        recording_resolver = LocalRecordingResolver()
+
+    audio_preprocessor: AudioPreprocessor
+    if config.feature_audio_preprocess_enabled:
+        audio_preprocessor = FfmpegAudioPreprocessor(
+            output_dir=Path(config.recording_download_dir) / "preprocessed",
+            sample_rate=config.audio_preprocess_target_sample_rate,
+            channels=config.audio_preprocess_target_channels,
+        )
+    else:
+        audio_preprocessor = PassthroughAudioPreprocessor()
+
+    return PipelineDeps(
+        recording_resolver=recording_resolver,
+        recording_resolver_factory=(
+            lambda meeting_context: TeamsChatRecordingResolver(
+                graph_client=graph_client,
+                download_dir=Path(config.recording_download_dir),
+                recording_extensions=config.graph_recording_extensions,
+            )
+            if meeting_context.chat_id
+            else LocalRecordingResolver()
+        ),
+        audio_preprocessor=audio_preprocessor,
+        stt=AzureSpeechFileInputSTT(
+            speech_key=config.azure_speech_key or "",
+            speech_region=config.azure_speech_region or "",
+            language=config.stt_language,
+            phrase_list=config.stt_phrase_list,
+            diarization_enabled=config.feature_diarization_enabled,
+        ),
         agent_a=AgentAIntentExtractor(),
         agent_b=AgentBAggregator(),
         agent_c=AgentCExcelBuilder(),
@@ -53,12 +135,13 @@ def run_pipeline(
     state_store.mark_run_status(run_id, PipelineStatus.RUNNING)
 
     try:
+        resolver = deps.recording_resolver_factory(meeting_context) if deps.recording_resolver_factory else deps.recording_resolver
         state_store.mark_step_running(run_id, PipelineStep.STEP_1_COLLECT, input_summary=meeting_context.meeting_id)
-        recording = deps.recording_resolver.resolve(meeting_context)
+        recording = resolver.resolve(meeting_context)
         state_store.mark_step_finished(run_id, PipelineStep.STEP_1_COLLECT, PipelineStatus.SUCCEEDED, recording.file_path)
 
         state_store.mark_step_running(run_id, PipelineStep.STEP_2_PREPROCESS, input_summary=recording.file_path)
-        preprocessed_recording = recording
+        preprocessed_recording = deps.audio_preprocessor.process(recording)
         state_store.mark_step_finished(
             run_id,
             PipelineStep.STEP_2_PREPROCESS,

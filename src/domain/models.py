@@ -41,6 +41,7 @@ class RecordingAsset:
     file_path: str
     file_id: str | None = None
     source_link: str | None = None
+    mime_type: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
