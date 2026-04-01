@@ -1,8 +1,8 @@
 # Elite Secretary
 
-> **Teams 회의 녹음 → LLM 비용 분석 산출물 자동 생성 Agent**
+> **Teams 회의 녹음 파일 → Action Item 추출 및 진행 agent**
 
-조직 내 재무 요청은 회의에서 구두로 전달되는 경우가 많습니다. *Elite Secretary*는 Teams 회의 녹음 파일 하나를 입력으로 받아, 회의 종료 후 LLM 사용량·비용 분석 Excel과 Insight 문서를 사람의 개입 없이 자동 생성하는 End-to-End AI Agent 워크플로우입니다.
+조직 내 여러 안건들은 회의에서 구두로 전달되는 경우가 많습니다. *Elite Secretary*는 Teams 회의 녹음 파일 하나를 입력으로 받아, 회의 종료 후 일정 예약, 자료 조사, 보고서 작성등을 사람의 개입 없이 자동 생성하는 End-to-End AI Agent 워크플로우입니다.
 
 ---
 
