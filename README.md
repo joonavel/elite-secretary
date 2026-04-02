@@ -1,8 +1,10 @@
 # Elite Secretary
 
-> **Teams 회의 녹음 파일 → Action Item 추출 및 진행 agent**
+> **온라인 회의 녹음 → Action Item 자동 추출 및 처리 Agent**
 
-조직 내 여러 안건들은 회의에서 구두로 전달되는 경우가 많습니다. *Elite Secretary*는 Teams 회의 녹음 파일 하나를 입력으로 받아, 회의 종료 후 일정 예약, 자료 조사, 보고서 작성등을 사람의 개입 없이 자동 생성하는 End-to-End AI Agent 워크플로우입니다.
+조직 내 여러 안건들은 회의에서 구두로 전달되는 경우가 많습니다. *Elite Secretary*는 Teams 회의 녹음 파일 하나를 입력으로 받아, 회의 종료 후 **일정 예약·템플릿 생성·자료 조사** 등 후속 Action Item들을 사람의 개입 없이 자동으로 처리하는 End-to-End AI Agent 워크플로우입니다.
+
+> **해커톤 데모 시나리오**: 구현 범위를 집중하기 위해 *"LLM 비용 분석 보고서 작성"* 을 단일 시나리오로 선정하였으며, 동일한 아키텍처가 다른 Action Item 유형으로도 확장 가능함을 함께 보여줍니다.
 
 ---
 
@@ -22,43 +24,58 @@
 
 ## 1. Pain Point
 
-### 조직의 재무 리포팅이 여전히 수작업에 묶여 있다
+### 회의 후 Action Item 처리가 여전히 수작업에 묶여 있다
 
-조직 내 재무·기술 관련 요청은 대부분 회의에서 구두로 전달되고, 회의 이후 아래 수작업이 반복된다.
+조직 내 업무 요청의 상당수는 회의에서 구두로 전달된다. 회의가 끝난 뒤 담당자는 아래 수작업을 반복적으로 수행해야 한다.
 
 | 수작업 단계 | 소요 시간 | 가치 창출 여부 |
 |---|---|---|
 | 회의 내용 수동 정리·요약 | 높음 | ❌ |
-| 요청 의도 파악 및 업무 이관 | 높음 | ❌ |
-| 수치 데이터 취합 (Excel, DB 등) | 매우 높음 | ❌ |
-| 재무/의사결정 문서 작성 | 매우 높음 | ⚠️ 부분적 |
+| Action Item 파악 및 담당자 이관 | 높음 | ❌ |
+| 후속 일정 조율 및 캘린더 등록 | 중간 | ❌ |
+| 자료 조사·데이터 취합 (Excel, DB 등) | 매우 높음 | ❌ |
+| 보고서·문서 초안 작성 | 매우 높음 | ⚠️ 부분적 |
 | **실제 인사이트 도출 및 의사결정** | **낮음** | **✅** |
 
 ### 핵심 문제: 시간이 잘못된 곳에 쓰이고 있다
 
-> "업무 시간의 대부분이 데이터를 찾고 준비하는 데 소모되고, 실제 분석과 인사이트 도출에는 극히 일부만 사용된다."
+> "업무 시간의 대부분이 Action Item을 파악하고 준비하는 데 소모되고, 실제 판단과 의사결정에는 극히 일부만 사용된다."
 
-재무 담당자는 데이터를 **만드는** 사람이어야 하는데, 현실에서는 데이터를 **모으는** 사람이 되어버린다.
+담당자는 **인사이트를 만드는** 사람이어야 하는데, 현실에서는 **정보를 모으고 전달하는** 사람이 되어버린다.
 
 ---
 
 ## 2. 우리의 솔루션
 
-### Teams 회의 녹음 → 재무 문서 자동 생성
+### 회의 녹음 → Action Item 자동 추출 및 처리
 
-**시나리오**: 팀장이 회의 중 재무담당자에게 구두로 요청한다.
+Elite Secretary는 회의 녹음 파일 하나로 아래 세 가지 유형의 Action Item을 자동으로 처리할 수 있는 구조로 설계되었습니다.
+
+| Action Item 유형 | 자동화 내용 |
+|---|---|
+| 📅 **일정 예약** | 회의에서 언급된 다음 미팅·마감을 캘린더에 자동 등록 |
+| 📝 **템플릿 생성** | 회의 맥락에 맞는 문서·보고서 초안 자동 작성 |
+| 🔍 **자료 조사** | 요청된 데이터를 내·외부 소스에서 취합하여 분석 결과물 생성 |
+
+**공통 처리 파이프라인**:
+
+1. **회의 녹음 수집** — Teams Graph API로 녹음 파일 자동 취득
+2. **STT** — Azure Speech SDK로 회의 전문(全文) 변환 + 화자 분리
+3. **Action Item 추출** (Agent A) — 회의 요약 + Action Item 유형·담당·기한 구조화
+4. **유형별 Agent 라우팅** — Action Item 유형에 따라 적합한 전문 Agent 실행
+5. **결과 배포** — SharePoint 업로드 + Teams 메시지로 링크 전송
+
+### 해커톤 데모 시나리오: LLM 비용 분석 보고서
+
+**상황**: 팀장이 회의 중 재무담당자에게 구두로 요청한다.
 
 > *"올해 상반기 전사 LLM 토큰 사용량과 비용을 정리해 주세요."*
 
-**Elite Secretary가 하는 일**: 회의가 끝나면 아래 파이프라인이 자동 실행된다.
+이 요청은 **"자료 조사 → 문서 작성"** 유형의 Action Item으로 분류되며, 아래 전문 Agent들이 자동 실행된다.
 
-1. **회의 녹음 수집** — Teams Graph API로 회의 녹음 파일 자동 취득
-2. **STT** — Azure Speech SDK로 회의 전문(全文) 변환 + 화자 분리
-3. **의도 추출** (Agent A) — 기간·대상·지표 유형을 구조화된 Intent로 추출
 4. **데이터 조회·집계** (Agent B) — 사내 재무 Excel에서 팀별·월별 토큰/비용 집계
 5. **Excel 리포트 생성** (Agent C) — 그래프 포함 재무 분석 Excel 자동 생성
 6. **Insight 문서 생성** (Agent D) — 수치 기반 인사이트 + 권고안 문서 자동 작성
-7. **결과 배포** — SharePoint 업로드 + Teams 메시지로 링크 전송
 
 **산출물**:
 - 📊 팀별/월별 토큰·비용 집계 + 그래프가 포함된 재무 분석 Excel
@@ -72,16 +89,16 @@
 
 **데이터 준비·정제에 80%의 시간이 소모된다**
 
-IDC는 "데이터 발견·준비·보호에 전체 업무 시간의 80%가 소모되고, 실제 분석과 인사이트 도출에는 단 20%만 사용된다"고 발표했다. 이는 데이터 담당자가 고부가 가치 업무보다 단순 준비 작업에 훨씬 많은 시간을 쓰고 있음을 의미한다.<sup>[[1]](#ref1)</sup>
+IDC는 "데이터 발견·준비·보호에 전체 업무 시간의 80%가 소모되고, 실제 분석과 인사이트 도출에는 단 20%만 사용된다"고 발표했다.<sup>[[1]](#ref1)</sup> 회의 후 Action Item 처리도 동일한 구조적 문제를 공유한다.
 
 ### Elite Secretary가 만드는 변화
 
 | 지표 | Before | After |
 |---|---|---|
-| 회의 → 문서 완성까지 걸리는 시간 | 수 시간 ~ 수 일 | **10분 이내** (외부 API 지연 제외) |
+| 회의 → Action Item 처리 완료까지 | 수 시간 ~ 수 일 | **10분 이내** (외부 API 지연 제외) |
 | 사람이 직접 해야 하는 작업 | 전체 | **트리거 1회** |
-| 재무 담당자의 고부가가치 업무 집중도 | 낮음 | **높음** |
-| 동일 구조로 확장 가능한 업무 범위 | 단일 태스크 | **모든 반복적 재무·운영 리포팅** |
+| 담당자의 고부가가치 업무 집중도 | 낮음 | **높음** |
+| 확장 가능한 Action Item 유형 | 단일 태스크 | **일정 예약 · 템플릿 생성 · 자료 조사 등** |
 
 ---
 
@@ -106,34 +123,45 @@ flowchart TD
     end
 
     subgraph AGENT_A ["Step 4 · Agent A (FR-3)"]
-        E[요약 / 의도 추출\nperiod · scope · metrics → intent.json]
+        E[회의 요약 / Action Item 추출\ntype · assignee · deadline → action_items.json]
     end
 
-    subgraph AGENT_B ["Step 5 · Agent B (FR-4/5)"]
-        F[재무 데이터 조회 · 집계\n팀별 · 월별 토큰 / 비용 · 합계 · 평균]
-    end
-
-    subgraph PARALLEL ["Step 6 · 병렬 생성 (FR-6/7/11)"]
+    subgraph ROUTING ["Step 5 · Action Item 라우팅"]
         direction LR
-        G[Agent C\nExcel 리포트 생성\n그래프 포함]
-        H[Agent D\nInsight 문서 생성\n권고안 포함]
+        R1[📅 일정 예약 Agent]
+        R2[📝 템플릿 생성 Agent]
+        R3[🔍 자료 조사 Agent]
     end
 
-    subgraph PUBLISH ["Step 7 · 배포 (FR-8)"]
+    subgraph DEMO ["데모 시나리오: 자료 조사 → 문서 작성 (FR-4~7)"]
+        direction TB
+        F[Agent B\n재무 데이터 조회 · 집계\n팀별 · 월별 토큰 / 비용]
+        subgraph PARALLEL ["병렬 생성 (FR-11)"]
+            direction LR
+            G[Agent C\nExcel 리포트 생성\n그래프 포함]
+            H[Agent D\nInsight 문서 생성\n권고안 포함]
+        end
+        F --> G & H
+    end
+
+    subgraph PUBLISH ["Step · 배포 (FR-8)"]
         I[SharePoint 업로드\n+ Teams 메시지 전송]
     end
 
-    subgraph LOG ["Step 8 · 로깅 (FR-9/10)"]
+    subgraph LOG ["Step · 로깅 (FR-9/10)"]
         J[Run Logger\n단계별 상태 추적\nPENDING → RUNNING → SUCCEEDED / FAILED]
     end
 
-    B --> C --> D --> E --> F
-    F --> G & H
+    B --> C --> D --> E
+    E --> R1 & R2 & R3
+    R3 --> F
     G & H --> I --> J
 
     style PARALLEL fill:#f0f9ff,stroke:#0ea5e9
+    style DEMO fill:#fdf4ff,stroke:#a855f7
     style COLLECT fill:#f0fdf4,stroke:#22c55e
     style LOG fill:#fefce8,stroke:#eab308
+    style ROUTING fill:#fff7ed,stroke:#f97316
 ```
 
 ### 에러 처리 정책
@@ -149,7 +177,7 @@ flowchart LR
 
 ## 5. 구현 현황
 
-### ✅ 구현 완료 (FR-4 ~ FR-11)
+### ✅ 구현 완료 — 데모 시나리오 (FR-4 ~ FR-11)
 
 | 기능 요구사항 | 설명 | 상태 |
 |---|---|---|
@@ -162,13 +190,21 @@ flowchart LR
 | FR-10 | 오류 처리 (파일 없음, 데이터 누락, 검증 error/warning 분리) | ✅ |
 | FR-11 | Agent C / Agent D 병렬 실행 | ✅ |
 
-### ❌ 미구현 (FR-1 ~ FR-3)
+### ❌ 미구현 — 공통 파이프라인 (FR-1 ~ FR-3)
 
 | 기능 요구사항 | 설명 | 미구현 사유 |
 |---|---|---|
 | FR-1 | Teams 녹음 파일 자동 수집 | 아래 [개발 한계](#8-개발-한계-및-실패-원인) 참조 |
 | FR-2 | Azure Speech SDK STT + 화자 분리 | FR-1 미구현으로 인한 연쇄 미구현 |
-| FR-3 | Agent A 회의 요약 / 의도 추출 | FR-2 미구현으로 인한 연쇄 미구현 |
+| FR-3 | Agent A 회의 요약 / Action Item 추출 | FR-2 미구현으로 인한 연쇄 미구현 |
+
+### 🔮 확장 가능 — 미구현 Action Item 유형
+
+| 유형 | 구현 가능한 Agent | 비고 |
+|---|---|---|
+| 📅 일정 예약 | Calendar Agent | Graph API + 캘린더 MCP 연동 |
+| 📝 템플릿 생성 | Template Agent | LLM + 문서 템플릿 라이브러리 |
+| 🔍 기타 자료 조사 | Research Agent | 웹 검색 + 내부 DB 조회 |
 
 ---
 
